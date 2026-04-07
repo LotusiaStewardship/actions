@@ -42,13 +42,13 @@ jobs:
           REMOVED_COUNT=$(echo "$REMOVED" | python3 -c "import sys,json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "0")
           MODIFIED_COUNT=$(echo "$MODIFIED" | python3 -c "import sys,json; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "0")
 
-          MSG="**New commit in ${REPO}**
+          MSG="<b>New commit in ${REPO}</b>
 
-          Branch: \`${REF_NAME}\`
+          Branch: <code>${REF_NAME}</code>
           Author: ${AUTHOR_NAME}
-          Commit: [\`${SHORT_SHA}\`](${COMMIT_URL})
+          Commit: <a href=\"${COMMIT_URL}\"><code>${SHORT_SHA}</code></a>
 
-          **Message:**
+          <b>Message:</b>
           ${FIRST_LINE}"
 
           if [ -n "$BODY" ]; then
@@ -59,20 +59,20 @@ jobs:
 
           MSG="${MSG}
 
-          **Files changed:** ${ADDED_COUNT} added, ${REMOVED_COUNT} removed, ${MODIFIED_COUNT} modified
+          <b>Files changed:</b> ${ADDED_COUNT} added, ${REMOVED_COUNT} removed, ${MODIFIED_COUNT} modified
 
-          [View on GitHub](${COMMIT_URL})"
+          <a href=\"${COMMIT_URL}\">View on GitHub</a>"
 
-          ESCAPED_MSG=$(printf '%s' "$MSG" | sed 's/[_*\[\]()~`>#+\-=|{}.!]/\\&/g')
+          ESCAPED_MSG=$(printf '%s' "$MSG" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')
+
+          PAYLOAD=$(jq -n \
+            --arg chat "$TELEGRAM_CHAT_ID" \
+            --arg text "$ESCAPED_MSG" \
+            '{chat_id: $chat, parse_mode: "HTML", text: $text, disable_web_page_preview: true}')
 
           curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
             -H "Content-Type: application/json" \
-            -d "{
-              \"chat_id\": \"${TELEGRAM_CHAT_ID}\",
-              \"parse_mode\": \"MarkdownV2\",
-              \"text\": $(printf '%s' "$ESCAPED_MSG" | jq -Rs .),
-              \"disable_web_page_preview\": true
-            }"
+            -d "$PAYLOAD"
 
   notify-merged-pr:
     if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
@@ -112,14 +112,14 @@ jobs:
               print('none')
           " 2>/dev/null || echo "none")
 
-          MSG="**Pull request merged in ${REPO}**
+          MSG="<b>Pull request merged in ${REPO}</b>
 
           #${PR_NUMBER}: ${PR_TITLE}
           Author: ${PR_AUTHOR}
           Merged by: ${PR_MERGED_BY}
-          Merge commit: [\`${SHORT_SHA}\`](${PR_HTML_URL}/commits/${MERGE_SHA})
+          Merge commit: <a href=\"${PR_HTML_URL}/commits/${MERGE_SHA}\"><code>${SHORT_SHA}</code></a>
 
-          **Changes:** +${ADDITIONS} / -${DELETIONS}
+          <b>Changes:</b> +${ADDITIONS} / -${DELETIONS}
           Files changed: ${CHANGED_FILES}
           Comments: ${COMMENTS} | Review comments: ${REVIEW_COMMENTS}
           Labels: ${LABEL_LIST}"
@@ -127,22 +127,22 @@ jobs:
           if [ -n "$BODY_PREVIEW" ]; then
             MSG="${MSG}
 
-          **Description:**
+          <b>Description:</b>
           ${BODY_PREVIEW}"
           fi
 
           MSG="${MSG}
 
-          [View PR](${PR_HTML_URL})
-          [View diff](${PR_HTML_URL}/files)"
+          <a href=\"${PR_HTML_URL}\">View PR</a>
+          <a href=\"${PR_HTML_URL}/files\">View diff</a>"
 
-          ESCAPED_MSG=$(printf '%s' "$MSG" | sed 's/[_*\[\]()~`>#+\-=|{}.!]/\\&/g')
+          ESCAPED_MSG=$(printf '%s' "$MSG" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')
+
+          PAYLOAD=$(jq -n \
+            --arg chat "$TELEGRAM_CHAT_ID" \
+            --arg text "$ESCAPED_MSG" \
+            '{chat_id: $chat, parse_mode: "HTML", text: $text, disable_web_page_preview: true}')
 
           curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
             -H "Content-Type: application/json" \
-            -d "{
-              \"chat_id\": \"${TELEGRAM_CHAT_ID}\",
-              \"parse_mode\": \"MarkdownV2\",
-              \"text\": $(printf '%s' "$ESCAPED_MSG" | jq -Rs .),
-              \"disable_web_page_preview\": true
-            }"
+            -d "$PAYLOAD"
