@@ -64,20 +64,14 @@ jobs:
 
           [View on GitHub](${COMMIT_URL})"
 
-          ESCAPED_MSG=$(printf '%s' "$MSG" | python3 -c '
-            import sys
-            msg = sys.stdin.read()
-            for c in "_*[]()~`>#+-=|{}.!":
-                msg = msg.replace(c, "\\" + c)
-            print(msg)
-          ')
+          ESCAPED_MSG=$(printf '%s' "$MSG" | sed 's/[_*\[\]()~`>#+\-=|{}.!]/\\&/g')
 
           curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
             -H "Content-Type: application/json" \
             -d "{
               \"chat_id\": \"${TELEGRAM_CHAT_ID}\",
               \"parse_mode\": \"MarkdownV2\",
-              \"text\": $(echo "$ESCAPED_MSG" | jq -Rs .),
+              \"text\": $(printf '%s' "$ESCAPED_MSG" | jq -Rs .),
               \"disable_web_page_preview\": true
             }"
 
@@ -143,19 +137,13 @@ jobs:
           [View PR](${PR_HTML_URL})
           [View diff](${PR_HTML_URL}/files)"
 
-          ESCAPED_MSG=$(printf '%s' "$MSG" | python3 -c '
-            import sys
-            msg = sys.stdin.read()
-            for c in "_*[]()~`>#+-=|{}.!":
-                msg = msg.replace(c, "\\" + c)
-            print(msg)
-          ')
+          ESCAPED_MSG=$(printf '%s' "$MSG" | sed 's/[_*\[\]()~`>#+\-=|{}.!]/\\&/g')
 
           curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
             -H "Content-Type: application/json" \
             -d "{
               \"chat_id\": \"${TELEGRAM_CHAT_ID}\",
               \"parse_mode\": \"MarkdownV2\",
-              \"text\": $(echo "$ESCAPED_MSG" | jq -Rs .),
+              \"text\": $(printf '%s' "$ESCAPED_MSG" | jq -Rs .),
               \"disable_web_page_preview\": true
             }"
