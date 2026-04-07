@@ -64,13 +64,13 @@ jobs:
 
           [View on GitHub](${COMMIT_URL})"
 
-          ESCAPED_MSG=$(python3 -c "
-          import json, sys
-          msg = sys.stdin.read()
-          for c in '_*[]()~`>#+-=|{}.!':
-              msg = msg.replace(c, '\\' + c)
-          print(msg)
-          " <<< "$MSG")
+          ESCAPED_MSG=$(printf '%s' "$MSG" | python3 -c '
+            import sys
+            msg = sys.stdin.read()
+            for c in "_*[]()~`>#+-=|{}.!":
+                msg = msg.replace(c, "\\" + c)
+            print(msg)
+          ')
 
           curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
             -H "Content-Type: application/json" \
@@ -143,13 +143,13 @@ jobs:
           [View PR](${PR_HTML_URL})
           [View diff](${PR_HTML_URL}/files)"
 
-          ESCAPED_MSG=$(python3 -c "
-          import sys
-          msg = sys.stdin.read()
-          for c in '_*[]()~`>#+-=|{}.!':
-              msg = msg.replace(c, '\\' + c)
-          print(msg)
-          " <<< "$MSG")
+          ESCAPED_MSG=$(printf '%s' "$MSG" | python3 -c '
+            import sys
+            msg = sys.stdin.read()
+            for c in "_*[]()~`>#+-=|{}.!":
+                msg = msg.replace(c, "\\" + c)
+            print(msg)
+          ')
 
           curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
             -H "Content-Type: application/json" \
